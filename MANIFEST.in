@@ -1,0 +1,38 @@
+# Include documentation
+include README.md
+include LICENSE
+include CHANGELOG.md
+include INSTALLATION.md
+include QUICKSTART.md
+
+# Include configuration files
+include requirements.txt
+include pyproject.toml
+include setup.py
+
+# Include scripts
+include install.sh
+include install.bat
+include start.sh
+include start.bat
+include check_system.py
+
+# Include all source files
+recursive-include src *.py
+recursive-include src *.yaml *.json *.png *.ico *.svg
+
+# Include tests
+recursive-include tests *.py
+
+# Include documentation
+recursive-include docs *.md *.rst *.txt
+
+# Include GitHub workflows
+recursive-include .github *.yml *.yaml
+
+# Exclude unnecessary files
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+global-exclude .gitignore
+global-exclude *.log

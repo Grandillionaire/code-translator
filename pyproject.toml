@@ -1,0 +1,129 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "code-translator-pro"
+version = "1.2.0"
+description = "Professional code translation tool with AI integration"
+readme = "README.md"
+authors = [
+    {name = "Code Translator Team", email = "contact@codetranslator.io"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Code Generators",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+]
+keywords = ["code", "translation", "ai", "gpt", "claude", "programming"]
+requires-python = ">=3.8"
+dependencies = [
+    "PyQt6>=6.5.0,<7.0.0",
+    "requests>=2.31.0,<3.0.0",
+    "cryptography>=41.0.0,<42.0.0",
+    "pyyaml>=6.0.1,<7.0.0",
+    "pyperclip>=1.8.2,<2.0.0",
+    "keyring>=24.2.0,<25.0.0",
+]
+
+[project.optional-dependencies]
+ai = [
+    "openai>=0.27.0",
+    "anthropic>=0.7.0,<1.0.0",
+    "google-generativeai>=0.3.0,<1.0.0",
+]
+dev = [
+    "pytest>=7.4.0,<8.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.7.0,<24.0.0",
+    "mypy>=1.4.1,<2.0.0",
+    "flake8>=6.1.0,<7.0.0",
+    "build>=0.10.0",
+    "twine>=4.0.0",
+]
+macos = [
+    "pynput>=1.7.6,<2.0.0",
+]
+all = [
+    "openai>=0.27.0",
+    "anthropic>=0.7.0,<1.0.0",
+    "google-generativeai>=0.3.0,<1.0.0",
+    "pynput>=1.7.6,<2.0.0 ; sys_platform == 'darwin'",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/code-translator"
+Documentation = "https://github.com/yourusername/code-translator/wiki"
+Repository = "https://github.com/yourusername/code-translator.git"
+"Bug Tracker" = "https://github.com/yourusername/code-translator/issues"
+Changelog = "https://github.com/yourusername/code-translator/blob/main/CHANGELOG.md"
+
+[project.scripts]
+code-translator = "main:main"
+
+[project.gui-scripts]
+code-translator-gui = "main:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml", "*.json", "*.png", "*.ico", "*.svg"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | build
+  | dist
+  | venv
+)/
+'''
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+no_implicit_optional = true
+check_untyped_defs = true
+
+[tool.flake8]
+max-line-length = 100
+exclude = [".git", "__pycache__", "build", "dist", "venv"]
+ignore = ["E203", "W503", "E501"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*", "*/__pycache__/*", "*/venv/*"]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
