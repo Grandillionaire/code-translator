@@ -12,17 +12,17 @@ from .app_manager import (
     ResourceMetrics,
     PerformanceMetrics,
     EnvironmentDetector,
-    PluginInterface
+    PluginInterface,
 )
 
 __all__ = [
-    'ApplicationLifecycleManager',
-    'ApplicationState',
-    'Dependency',
-    'DependencyStatus',
-    'ResourceMonitor',
-    'ResourceMetrics',
-    'PerformanceMetrics',
-    'EnvironmentDetector',
-    'PluginInterface',
+    "ApplicationLifecycleManager",
+    "ApplicationState",
+    "Dependency",
+    "DependencyStatus",
+    "ResourceMonitor",
+    "ResourceMetrics",
+    "PerformanceMetrics",
+    "EnvironmentDetector",
+    "PluginInterface",
 ]

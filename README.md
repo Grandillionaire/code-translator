@@ -1,181 +1,221 @@
 # Code Translator 🔄
 
-A professional desktop code translator application that intelligently translates code between programming languages using AI. Built with Python and PyQt6, featuring a transparent overlay interface for seamless workflow integration.
+[![CI/CD](https://github.com/Grandillionaire/code-translator/actions/workflows/ci.yml/badge.svg)](https://github.com/Grandillionaire/code-translator/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://python.org)
+[![PyQt6](https://img.shields.io/badge/PyQt6-6.5.0+-green.svg)](https://riverbankcomputing.com/software/pyqt/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688.svg)](https://fastapi.tiangolo.com)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## 📚 Documentation
+A professional code translator that intelligently translates code between programming languages using AI. Features a modern desktop GUI, web API, and CLI interface.
 
-- **[Quick Start Guide](QUICKSTART.md)** - Get running in 5 minutes
-- **[Installation Guide](INSTALLATION.md)** - Detailed setup instructions
-- **[User Manual](docs/USER_MANUAL.md)** - Complete feature documentation
-
-![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
-![PyQt6](https://img.shields.io/badge/PyQt6-6.5.0+-green.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Code Translator Demo](docs/demo.gif)
 
 ## ✨ Features
 
 ### 🤖 AI-Powered Translation
-- **Multiple AI Providers**: Support for OpenAI GPT-4, Anthropic Claude, and Google Gemini
-- **OpenAI Compatibility**: Automatic support for both old (<1.0) and new (>=1.0) OpenAI library versions
-- **Intelligent Translation**: Handles paradigm differences between languages, not just syntax
-- **Auto-Detection**: Automatically detects source programming language
-- **Confidence Scores**: Shows translation confidence levels
-- **Automatic Fallback**: Seamlessly switches between providers if one fails
+- **Multiple AI Providers**: OpenAI GPT-4, Anthropic Claude, Google Gemini
+- **Intelligent Translation**: Handles paradigm differences, not just syntax
+- **Confidence Scores**: Know how reliable each translation is
+- **Automatic Fallback**: Seamlessly switches providers if one fails
 
-### 🖥️ Modern UI
-- **Transparent Overlay**: Always-on-top window with adjustable transparency
-- **Dark/Light Themes**: Toggle between dark and light modes
-- **Syntax Highlighting**: Full syntax highlighting for all supported languages
-- **Resizable & Draggable**: Position the window anywhere on your screen
-
-### ⚡ Productivity Features
-- **Global Keyboard Shortcuts**: Quick access from anywhere
-- **Translation History**: Save and search through past translations
-- **Favorites System**: Star and save frequently used translations
-- **Clipboard Integration**: Paste code directly from clipboard
-- **Drag & Drop**: Drop code files directly into the translator
-- **Real-time Translation**: Translate as you type (optional)
-- **Click-through Mode**: Make window transparent to mouse clicks
-
-### 🌐 Language Support
+### 🌐 10+ Languages Supported
 - Python
-- JavaScript
-- Java
+- JavaScript / TypeScript
+- Java / Kotlin
+- Swift
 - C++
 - Go
 - Rust
+- Ruby
 
-### 🔐 Security & Privacy
-- **Encrypted API Keys**: All API keys stored locally with encryption
-- **Local Storage**: All data stored locally by default
-- **Privacy Mode**: Option to disable history for sensitive code
+### 🖥️ Multiple Interfaces
+- **Desktop GUI** - Beautiful PyQt6 app with transparency support
+- **Web API** - FastAPI backend with interactive frontend
+- **CLI** - Command-line tool for scripts and pipelines
+
+### ⚡ Smart Features
+- Auto-detect source language
+- Syntax highlighting
+- Translation history
+- Clipboard integration
+- Offline mode with basic translations
+
+## 🚀 Quick Start
+
+### Desktop GUI
+```bash
+# Clone and install
+git clone https://github.com/Grandillionaire/code-translator.git
+cd code-translator
+pip install -r requirements.txt
+
+# Run the desktop app
+python src/main.py
+```
+
+### CLI Mode
+```bash
+# Translate a file
+python -m code_translator --from python --to javascript input.py
+
+# Auto-detect source language
+python -m code_translator --to rust input.py -o output.rs
+
+# Translate from stdin
+echo "print('hello')" | python -m code_translator --from python --to java
+
+# List supported languages
+python -m code_translator --list-languages
+```
+
+### Web API
+```bash
+# Install web dependencies
+pip install fastapi uvicorn
+
+# Run the server
+uvicorn src.web.app:app --reload
+
+# Open http://localhost:8000 in your browser
+```
 
 ## 📦 Installation
 
 ### Requirements
-- Python 3.8 or higher
-- Git (for downloading the project)
-- API key for at least one AI provider (OpenAI, Anthropic, or Google)
+- Python 3.9 or higher
+- pip (Python package manager)
 
-### Quick Start (3 Steps)
-
+### Full Installation
 ```bash
-# 1. Download the project
-git clone https://github.com/yourusername/code-translator.git
+# Clone repository
+git clone https://github.com/Grandillionaire/code-translator.git
 cd code-translator
 
-# 2. Install dependencies
-pip3 install -r requirements.txt
+# Create virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# 3. Run the application
-python3 src/main.py
+# Install all dependencies
+pip install -r requirements.txt
+
+# Set up API keys (optional - for AI providers)
+# Add to environment or use the settings dialog in GUI
+export OPENAI_API_KEY="your-key"
+export ANTHROPIC_API_KEY="your-key"
+export GOOGLE_API_KEY="your-key"
 ```
-
-**📖 Need detailed instructions?** See [INSTALLATION.md](INSTALLATION.md) for a complete step-by-step guide including:
-- How to install Python
-- Getting API keys
-- Troubleshooting common issues
-- Platform-specific setup
 
 ### Platform-Specific Notes
 
-#### Windows
-```bash
-# Full functionality with transparent windows
-python src/main.py
-```
-
 #### macOS
 ```bash
-# Install with global hotkey support
-pip install -e ".[ai,global-hotkeys]"
-
-# Grant accessibility permissions when prompted
-python src/main.py
+# Global hotkeys require accessibility permissions
+# Grant permission when prompted on first run
 ```
 
 #### Linux
 ```bash
-# Requires X11 for transparency
-python src/main.py
+# Requires X11 for transparency features
+sudo apt-get install libxkbcommon-x11-0 libxcb-cursor0
 ```
 
-## 🚀 Usage
-
-### First-Time Setup
-1. Launch the application
-2. Click the settings button (⚙)
-3. Add at least one API key in the "API Keys" tab
-4. Configure your preferences
-
-### Basic Translation
-1. Paste or type code in the left panel
-2. Select source and target languages (or use auto-detect)
-3. Press `Ctrl+Enter` or click "Translate"
-4. View translated code in the right panel
-
-### Keyboard Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+Shift+T` | Show/Hide window |
-| `Ctrl+Enter` | Translate code |
-| `Ctrl+M` | Toggle click-through mode |
-| `Ctrl+D` | Toggle dark/light theme |
-| `Ctrl+\` | Close window |
-| `Ctrl+Arrow Keys` | Move window |
-| `Ctrl+H` | Show history |
-| `Ctrl+S` | Save to favorites |
-
-## 🛠️ Configuration
+## 🔧 Configuration
 
 ### API Keys
-Add your API keys in Settings → API Keys:
-- **OpenAI**: Get from [platform.openai.com](https://platform.openai.com)
-- **Anthropic**: Get from [console.anthropic.com](https://console.anthropic.com)
-- **Google**: Get from [makersuite.google.com](https://makersuite.google.com)
+Configure in Settings dialog or via environment variables:
+- `OPENAI_API_KEY` - Get from [platform.openai.com](https://platform.openai.com)
+- `ANTHROPIC_API_KEY` - Get from [console.anthropic.com](https://console.anthropic.com)
+- `GOOGLE_API_KEY` - Get from [makersuite.google.com](https://makersuite.google.com)
 
 ### Settings Location
 - **Windows**: `%APPDATA%\CodeTranslator\settings.json`
 - **macOS/Linux**: `~/.config/CodeTranslator/settings.json`
 
-### Export/Import Settings
-```python
-# Export settings (without API keys)
-python -m code_translator export-settings settings.yaml
+## 🌐 Web API Reference
 
-# Import settings
-python -m code_translator import-settings settings.yaml
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/health` | Health check |
+| GET | `/api/languages` | List supported languages |
+| POST | `/api/detect` | Detect language |
+| POST | `/api/translate` | Translate code |
+
+### Example: Translate Code
+```bash
+curl -X POST http://localhost:8000/api/translate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "code": "def hello(): print(\"Hello!\")",
+    "source_lang": "Python",
+    "target_lang": "JavaScript"
+  }'
 ```
 
-## 🧩 Advanced Features
+### Response
+```json
+{
+  "translated_code": "function hello() {\n  console.log(\"Hello!\");\n}",
+  "source_lang": "Python",
+  "target_lang": "JavaScript",
+  "confidence": 0.95,
+  "provider_used": "anthropic"
+}
+```
 
-### Offline Mode
-When no internet connection is available, the app automatically falls back to basic syntax translation using built-in rules.
+## ☁️ Deployment
 
-### Translation Cache
-Recent translations are cached locally for faster access and offline availability.
+### Deploy to Railway
+```bash
+# Login to Railway CLI
+railway login
 
-### Custom Providers
-You can add custom translation providers by implementing the provider interface. See [docs/custom-providers.md](docs/custom-providers.md).
+# Initialize and deploy
+railway init
+railway up
 
-## 🔧 Development
+# Set environment variables
+railway variables set OPENAI_API_KEY=your-key
+```
+
+### Deploy to Vercel
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy (create vercel.json first)
+vercel deploy
+```
+
+### Docker
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD ["uvicorn", "src.web.app:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+## 🧪 Development
 
 ### Setup Development Environment
 ```bash
-# Install development dependencies
-pip install -e ".[dev]"
+# Install dev dependencies
+pip install -r requirements.txt
 
 # Run tests
-pytest
+python -m pytest tests/ -v
 
 # Format code
-black src/
+black src/ tests/
 
 # Type checking
 mypy src/
 
-# Linting
+# Lint
 flake8 src/
 ```
 
@@ -183,63 +223,66 @@ flake8 src/
 ```
 code-translator/
 ├── src/
-│   ├── main.py                 # Application entry point
-│   ├── gui/                    # GUI components
-│   │   ├── main_window.py      # Main window implementation
-│   │   └── widgets.py          # Custom widgets
-│   ├── translator/             # Translation engine
-│   │   ├── translator_engine.py # AI translation logic
-│   │   └── offline_translator.py # Offline translation
-│   ├── config/                 # Configuration management
-│   │   └── settings.py         # Settings handler
-│   └── utils/                  # Utility functions
-│       ├── logger.py           # Logging configuration
-│       └── shortcuts.py        # Keyboard shortcuts
-├── tests/                      # Test suite
-├── docs/                       # Documentation
-├── requirements.txt            # Python dependencies
-├── setup.py                    # Installation script
-├── README.md                   # This file
-└── LICENSE                     # MIT License
+│   ├── __main__.py          # CLI entry point
+│   ├── main.py              # Desktop app entry point
+│   ├── gui/                 # PyQt6 GUI components
+│   ├── translator/          # Translation engine
+│   │   ├── translator_engine.py
+│   │   └── offline_translator.py
+│   ├── web/                 # FastAPI web app
+│   │   ├── app.py
+│   │   └── templates/
+│   ├── config/              # Configuration management
+│   ├── providers/           # AI provider implementations
+│   └── utils/               # Utilities
+├── tests/                   # Test suite
+├── .github/workflows/       # CI/CD pipelines
+├── requirements.txt
+└── README.md
 ```
+
+### Running Tests
+```bash
+# Run all tests
+python -m pytest tests/ -v
+
+# Run with coverage
+python -m pytest tests/ -v --cov=src --cov-report=html
+
+# Run specific test file
+python -m pytest tests/test_api_compatibility.py -v
+```
+
+## ⌨️ Keyboard Shortcuts (Desktop)
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Shift+T` | Show/Hide window |
+| `Ctrl+Enter` | Translate code |
+| `Ctrl+D` | Toggle dark/light theme |
+| `Ctrl+H` | Show history |
+| `Ctrl+S` | Save to favorites |
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+2. Create your feature branch (`git checkout -b feature/amazing`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing`)
 5. Open a Pull Request
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) for details.
 
 ## 🙏 Acknowledgments
 
-- Built with [PyQt6](https://www.riverbankcomputing.com/software/pyqt/)
-- AI translation powered by OpenAI, Anthropic, and Google
-- Syntax highlighting inspired by VS Code themes
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/code-translator/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/code-translator/discussions)
-- **Wiki**: [Project Wiki](https://github.com/yourusername/code-translator/wiki)
-
-## 🗺️ Roadmap
-
-- [ ] Support for more programming languages (TypeScript, Swift, Kotlin)
-- [ ] Real-time collaborative translation
-- [ ] VS Code extension
-- [ ] Web version with similar functionality
-- [ ] Custom translation rules editor
-- [ ] Integration with popular IDEs
-- [ ] Batch file translation
-- [ ] Translation quality metrics
+- Built with [PyQt6](https://riverbankcomputing.com/software/pyqt/)
+- Web API powered by [FastAPI](https://fastapi.tiangolo.com)
+- AI translation by OpenAI, Anthropic, and Google
 
 ---
 
-Made with ❤️ by the Code Translator Team
+Made with ❤️ by [Grandillionaire](https://github.com/Grandillionaire)
