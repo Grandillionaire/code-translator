@@ -41,49 +41,49 @@ def main():
     # Setup logging
     logger = setup_logger()
     logger.info("Starting Code Translator application")
-    
+
     # Check dependencies
     logger.info("Checking runtime dependencies...")
     report = DependencyChecker.check_all_dependencies()
-    
-    if not report['all_core_satisfied']:
+
+    if not report["all_core_satisfied"]:
         print("\nERROR: Core dependencies are not satisfied.")
         DependencyChecker.print_report(report)
-        
+
         # If running in GUI mode, show error dialog
-        if 'PyQt6' in sys.modules:
+        if "PyQt6" in sys.modules:
             app = QApplication(sys.argv)
             QMessageBox.critical(
                 None,
                 "Missing Dependencies",
                 "Core dependencies are not installed.\n\n"
                 "Please run: pip install -r requirements.txt\n\n"
-                "See console output for details."
+                "See console output for details.",
             )
         sys.exit(1)
-    
+
     # Log AI providers status
-    if report['ai_providers_available'] == 0:
+    if report["ai_providers_available"] == 0:
         logger.warning("No AI providers available - only offline translation will work")
     else:
         logger.info(f"AI providers available: {report['ai_providers_available']}")
-    
+
     # Enable high DPI scaling
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
-    
+
     # Create application instance
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
-    
+
     # Load settings
     settings = Settings()
-    
+
     # Create and show main window
     window = TranslatorWindow(settings)
     window.show()
-    
+
     # Run application
     logger.info("Application started successfully")
     sys.exit(app.exec())

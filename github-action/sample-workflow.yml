@@ -1,0 +1,115 @@
+# Sample GitHub Actions workflow for Code Translator
+# Copy this to .github/workflows/ in your repository
+
+name: Code Translation
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/**/*.py'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**/*.py'
+  workflow_dispatch:
+    inputs:
+      target_language:
+        description: 'Target language for translation'
+        required: true
+        default: 'JavaScript'
+        type: choice
+        options:
+          - JavaScript
+          - TypeScript
+          - Java
+          - Go
+          - Rust
+          - C++
+          - Kotlin
+          - Swift
+          - Ruby
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Translate Python to JavaScript
+        id: translate
+        uses: your-org/code-translator-action@v1
+        with:
+          source-lang: Python
+          target-lang: ${{ github.event.inputs.target_language || 'JavaScript' }}
+          files: 'src/**/*.py'
+          output-dir: 'translated'
+          provider: ${{ secrets.AI_PROVIDER || 'offline' }}
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          fail-on-error: false
+          generate-report: true
+
+      - name: Upload translated files
+        uses: actions/upload-artifact@v4
+        with:
+          name: translated-code-${{ github.sha }}
+          path: translated/
+          retention-days: 30
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const successCount = '${{ steps.translate.outputs.success-count }}';
+            const errorCount = '${{ steps.translate.outputs.error-count }}';
+            
+            const body = `## 🔄 Code Translation Results
+            
+            | Metric | Count |
+            |--------|-------|
+            | ✅ Successful | ${successCount} |
+            | ❌ Failed | ${errorCount} |
+            
+            📁 Translated files are available in the [workflow artifacts](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}).
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  validate-translations:
+    needs: translate
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Download translations
+        uses: actions/download-artifact@v4
+        with:
+          name: translated-code-${{ github.sha }}
+          path: translated/
+
+      - name: Setup Node.js (for JavaScript validation)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate JavaScript syntax
+        run: |
+          echo "Validating translated JavaScript files..."
+          for file in translated/*.js; do
+            if [ -f "$file" ]; then
+              echo "Checking: $file"
+              node --check "$file" || echo "Warning: Syntax issues in $file"
+            fi
+          done

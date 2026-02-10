@@ -1,0 +1,28 @@
+- id: code-translator-validate
+  name: Validate Code Translations
+  description: Validates that code translations are consistent and up-to-date
+  entry: code-translator-hook
+  language: python
+  files: \.(py|js|ts|java|go|rs|rb|cpp|kt|swift)$
+  stages: [commit, push]
+  additional_dependencies: []
+
+- id: code-translator-analyze
+  name: Analyze Code Complexity
+  description: Analyzes code complexity and reports issues
+  entry: code-translator-analyze
+  language: python
+  files: \.(py|js|ts|java|go|rs|rb|cpp|kt|swift)$
+  stages: [commit]
+  args: ['--max-complexity', '15']
+  additional_dependencies: []
+
+- id: code-translator-sync
+  name: Sync Translations
+  description: Automatically updates translated files when source changes
+  entry: code-translator-sync
+  language: python
+  files: \.(py|js|ts|java|go|rs|rb|cpp|kt|swift)$
+  stages: [commit]
+  additional_dependencies: []
+  pass_filenames: true

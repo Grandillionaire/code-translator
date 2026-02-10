@@ -1,0 +1,71 @@
+# Example .pre-commit-config.yaml for Code Translator
+# Copy this to .pre-commit-config.yaml in your project root
+
+repos:
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+      - id: check-merge-conflict
+
+  # Code Translator hooks
+  - repo: https://github.com/your-org/code-translator
+    rev: v1.2.0  # Use the latest version
+    hooks:
+      # Validate translations are complete and consistent
+      - id: code-translator-validate
+        name: Validate Code Translations
+        files: \.(py|js|ts|java|go|rs|rb)$
+        stages: [commit]
+        
+      # Analyze code complexity
+      - id: code-translator-analyze
+        name: Check Code Complexity
+        args:
+          - '--max-complexity'
+          - '15'
+        files: \.(py|js|ts|java|go|rs|rb)$
+        stages: [commit]
+        
+      # Sync translations on commit
+      - id: code-translator-sync
+        name: Sync Translations
+        files: ^src/.*\.py$
+        stages: [commit]
+
+  # Python linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # JavaScript/TypeScript linting
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.56.0
+    hooks:
+      - id: eslint
+        files: \.(js|jsx|ts|tsx)$
+        types: [file]
+        additional_dependencies:
+          - eslint@8.56.0
+          - typescript@5.3.0
+
+# Configuration for translation sync
+# Create this in your project root as .translation-config.json
+# {
+#   "mappings": [
+#     {
+#       "source": "src/python/*.py",
+#       "target": "src/javascript/*.js",
+#       "source_lang": "Python",
+#       "target_lang": "JavaScript"
+#     }
+#   ]
+# }
