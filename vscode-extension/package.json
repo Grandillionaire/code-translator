@@ -1,0 +1,139 @@
+{
+  "name": "code-translator",
+  "displayName": "Code Translator",
+  "description": "AI-powered code translation between programming languages",
+  "version": "0.1.0",
+  "publisher": "grandillionaire",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Grandillionaire/code-translator"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "code",
+    "translator",
+    "convert",
+    "python",
+    "javascript",
+    "typescript",
+    "java",
+    "ai"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codeTranslator.translateSelection",
+        "title": "Translate Selection",
+        "category": "Code Translator"
+      },
+      {
+        "command": "codeTranslator.translateFile",
+        "title": "Translate File",
+        "category": "Code Translator"
+      },
+      {
+        "command": "codeTranslator.detectLanguage",
+        "title": "Detect Language",
+        "category": "Code Translator"
+      },
+      {
+        "command": "codeTranslator.openPanel",
+        "title": "Open Translation Panel",
+        "category": "Code Translator"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "codeTranslator.translateSelection",
+          "when": "editorHasSelection",
+          "group": "1_modification"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "codeTranslator.translateSelection",
+        "key": "ctrl+shift+t",
+        "mac": "cmd+shift+t",
+        "when": "editorHasSelection"
+      }
+    ],
+    "configuration": {
+      "title": "Code Translator",
+      "properties": {
+        "codeTranslator.defaultTargetLanguage": {
+          "type": "string",
+          "default": "JavaScript",
+          "enum": [
+            "Python",
+            "JavaScript",
+            "TypeScript",
+            "Java",
+            "Kotlin",
+            "Swift",
+            "C++",
+            "Go",
+            "Rust",
+            "Ruby"
+          ],
+          "description": "Default target language for translations"
+        },
+        "codeTranslator.provider": {
+          "type": "string",
+          "default": "auto",
+          "enum": ["auto", "openai", "anthropic", "google", "offline"],
+          "description": "Preferred AI provider for translations"
+        },
+        "codeTranslator.showConfidence": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show confidence score after translation"
+        },
+        "codeTranslator.autoDetectLanguage": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically detect source language"
+        },
+        "codeTranslator.apiEndpoint": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "Code Translator API endpoint URL"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^18.x",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.45.0",
+    "typescript": "^5.1.0",
+    "@vscode/test-electron": "^2.3.0",
+    "@vscode/vsce": "^2.20.0"
+  },
+  "dependencies": {
+    "axios": "^1.5.0"
+  }
+}

@@ -1,13 +1,16 @@
 # Code Translator 🔄
 
 [![CI/CD](https://github.com/Grandillionaire/code-translator/actions/workflows/ci.yml/badge.svg)](https://github.com/Grandillionaire/code-translator/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://github.com/Grandillionaire/code-translator/actions)
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://python.org)
 [![PyQt6](https://img.shields.io/badge/PyQt6-6.5.0+-green.svg)](https://riverbankcomputing.com/software/pyqt/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688.svg)](https://fastapi.tiangolo.com)
+[![Docker](https://img.shields.io/badge/docker-ready-2496ED.svg)](https://docker.com)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A professional code translator that intelligently translates code between programming languages using AI. Features a modern desktop GUI, web API, and CLI interface.
 
+<!-- TODO: Add demo GIF showing the translator in action -->
 ![Code Translator Demo](docs/demo.gif)
 
 ## ✨ Features
@@ -32,6 +35,7 @@ A professional code translator that intelligently translates code between progra
 - **Desktop GUI** - Beautiful PyQt6 app with transparency support
 - **Web API** - FastAPI backend with interactive frontend
 - **CLI** - Command-line tool for scripts and pipelines
+- **VS Code Extension** - Coming soon! ([preview](vscode-extension/))
 
 ### ⚡ Smart Features
 - Auto-detect source language
@@ -164,6 +168,8 @@ curl -X POST http://localhost:8000/api/translate \
 }
 ```
 
+📖 **Full API documentation**: See [docs/API.md](docs/API.md) for complete reference with more examples.
+
 ## ☁️ Deployment
 
 ### Deploy to Railway
@@ -189,15 +195,23 @@ vercel deploy
 ```
 
 ### Docker
-```dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-EXPOSE 8000
-CMD ["uvicorn", "src.web.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+The easiest way to run the web API:
+
+```bash
+# Quick start with Docker
+docker build -t code-translator .
+docker run -p 8000:8000 -e OPENAI_API_KEY=your-key code-translator
+
+# Or use Docker Compose (recommended)
+docker-compose up -d
+
+# With environment file
+echo "OPENAI_API_KEY=your-key" > .env
+docker-compose up -d
 ```
+
+For more Docker configuration options, see the `Dockerfile` and `docker-compose.yml` in the repository.
 
 ## 🧪 Development
 
@@ -277,11 +291,32 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-## 🙏 Acknowledgments
+## 📚 Examples
 
-- Built with [PyQt6](https://riverbankcomputing.com/software/pyqt/)
-- Web API powered by [FastAPI](https://fastapi.tiangolo.com)
-- AI translation by OpenAI, Anthropic, and Google
+Check out the [`examples/`](examples/) folder for sample code files demonstrating translations:
+
+- `python_example.py` - Python → JavaScript translation
+- `javascript_example.js` - JavaScript → Python translation  
+- `complex_class.py` - Advanced OOP patterns
+
+## 📊 Benchmarks
+
+See [BENCHMARKS.md](BENCHMARKS.md) for:
+- Translation accuracy by language pair
+- Speed benchmarks per provider
+- Supported language features matrix
+
+## 🏗️ Built With
+
+| Technology | Purpose |
+|------------|---------|
+| [Python 3.9+](https://python.org) | Core language |
+| [PyQt6](https://riverbankcomputing.com/software/pyqt/) | Desktop GUI framework |
+| [FastAPI](https://fastapi.tiangolo.com) | Web API framework |
+| [Pydantic](https://pydantic.dev) | Data validation |
+| [OpenAI API](https://openai.com) | AI translation provider |
+| [Anthropic API](https://anthropic.com) | AI translation provider |
+| [Google AI](https://ai.google.dev) | AI translation provider |
 
 ---
 
