@@ -1,0 +1,68 @@
+name: 'Code Translator Action'
+description: 'Automatically translate code between programming languages in your CI/CD pipeline'
+author: 'Code Translator Team'
+branding:
+  icon: 'code'
+  color: 'blue'
+
+inputs:
+  source-lang:
+    description: 'Source programming language (or "auto" for auto-detection)'
+    required: false
+    default: 'auto'
+  target-lang:
+    description: 'Target programming language'
+    required: true
+  files:
+    description: 'Glob pattern for files to translate (e.g., "src/**/*.py")'
+    required: true
+  output-dir:
+    description: 'Output directory for translated files'
+    required: false
+    default: 'translated'
+  provider:
+    description: 'AI provider to use (openai, anthropic, google, offline)'
+    required: false
+    default: 'offline'
+  openai-api-key:
+    description: 'OpenAI API key (if using openai provider)'
+    required: false
+  anthropic-api-key:
+    description: 'Anthropic API key (if using anthropic provider)'
+    required: false
+  google-api-key:
+    description: 'Google API key (if using google provider)'
+    required: false
+  fail-on-error:
+    description: 'Fail the action if translation errors occur'
+    required: false
+    default: 'true'
+  generate-report:
+    description: 'Generate a translation report as a job summary'
+    required: false
+    default: 'true'
+
+outputs:
+  translated-files:
+    description: 'JSON array of translated file paths'
+  success-count:
+    description: 'Number of successfully translated files'
+  error-count:
+    description: 'Number of files that failed to translate'
+  report-path:
+    description: 'Path to the translation report file'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  env:
+    INPUT_SOURCE_LANG: ${{ inputs.source-lang }}
+    INPUT_TARGET_LANG: ${{ inputs.target-lang }}
+    INPUT_FILES: ${{ inputs.files }}
+    INPUT_OUTPUT_DIR: ${{ inputs.output-dir }}
+    INPUT_PROVIDER: ${{ inputs.provider }}
+    INPUT_OPENAI_API_KEY: ${{ inputs.openai-api-key }}
+    INPUT_ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
+    INPUT_GOOGLE_API_KEY: ${{ inputs.google-api-key }}
+    INPUT_FAIL_ON_ERROR: ${{ inputs.fail-on-error }}
+    INPUT_GENERATE_REPORT: ${{ inputs.generate-report }}

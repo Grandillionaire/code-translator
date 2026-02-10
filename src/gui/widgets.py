@@ -266,6 +266,30 @@ class TranslationWidget(QWidget):
 
         layout.addLayout(lang_bar)
 
+        # Second row of buttons for advanced features
+        advanced_bar = QHBoxLayout()
+        
+        # Explain button
+        self.explain_btn = QPushButton("💡 Explain")
+        self.explain_btn.setToolTip("Explain this code in plain English")
+        self.explain_btn.clicked.connect(self.explain_code)
+        advanced_bar.addWidget(self.explain_btn)
+        
+        # Generate Tests button
+        self.generate_tests_btn = QPushButton("🧪 Generate Tests")
+        self.generate_tests_btn.setToolTip("Generate unit tests for this code")
+        self.generate_tests_btn.clicked.connect(self.generate_tests)
+        advanced_bar.addWidget(self.generate_tests_btn)
+        
+        # Analyze button
+        self.analyze_btn = QPushButton("📊 Analyze")
+        self.analyze_btn.setToolTip("Analyze code complexity")
+        self.analyze_btn.clicked.connect(self.analyze_code)
+        advanced_bar.addWidget(self.analyze_btn)
+        
+        advanced_bar.addStretch()
+        layout.addLayout(advanced_bar)
+
         # Code areas
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
@@ -556,6 +580,101 @@ class TranslationWidget(QWidget):
         text = clipboard.text()
         if text:
             self.input_area.setPlainText(text)
+
+    def explain_code(self):
+        """Explain the input code in plain English"""
+        code = self.input_area.toPlainText().strip()
+        if not code:
+            QMessageBox.warning(self, "Warning", "Please enter some code to explain.")
+            return
+
+        source_lang = self.source_combo.currentText()
+        if source_lang == "Auto-detect":
+            source_lang = self.translator.detect_language(code)
+            if not source_lang:
+                QMessageBox.warning(
+                    self, "Warning",
+                    "Could not detect language. Please select manually."
+                )
+                return
+
+        self.explain_btn.setEnabled(False)
+        self.explain_btn.setText("Explaining...")
+
+        try:
+            explanation = self.translator.explain_code(code, source_lang)
+            self.output_area.setPlainText(explanation)
+            self.confidence_label.setText("Explanation")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to explain code: {e}")
+        finally:
+            self.explain_btn.setEnabled(True)
+            self.explain_btn.setText("💡 Explain")
+
+    def generate_tests(self):
+        """Generate unit tests for the input code"""
+        code = self.input_area.toPlainText().strip()
+        if not code:
+            QMessageBox.warning(self, "Warning", "Please enter some code to generate tests for.")
+            return
+
+        source_lang = self.source_combo.currentText()
+        if source_lang == "Auto-detect":
+            source_lang = self.translator.detect_language(code)
+            if not source_lang:
+                QMessageBox.warning(
+                    self, "Warning",
+                    "Could not detect language. Please select manually."
+                )
+                return
+
+        self.generate_tests_btn.setEnabled(False)
+        self.generate_tests_btn.setText("Generating...")
+
+        try:
+            from translator.test_generator import TestGenerator
+            generator = TestGenerator()
+            tests = generator.generate_tests(code, source_lang)
+            self.output_area.setPlainText(tests)
+            self.confidence_label.setText("Generated Tests")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to generate tests: {e}")
+        finally:
+            self.generate_tests_btn.setEnabled(True)
+            self.generate_tests_btn.setText("🧪 Generate Tests")
+
+    def analyze_code(self):
+        """Analyze code complexity"""
+        code = self.input_area.toPlainText().strip()
+        if not code:
+            QMessageBox.warning(self, "Warning", "Please enter some code to analyze.")
+            return
+
+        source_lang = self.source_combo.currentText()
+        if source_lang == "Auto-detect":
+            source_lang = self.translator.detect_language(code)
+            if not source_lang:
+                QMessageBox.warning(
+                    self, "Warning",
+                    "Could not detect language. Please select manually."
+                )
+                return
+
+        self.analyze_btn.setEnabled(False)
+        self.analyze_btn.setText("Analyzing...")
+
+        try:
+            from analyzer.complexity import ComplexityAnalyzer
+            analyzer = ComplexityAnalyzer()
+            analysis = analyzer.analyze(code, source_lang)
+            output = analyzer.format_analysis(analysis)
+            self.output_area.setPlainText(output)
+            self.confidence_label.setText(f"Complexity: {analyzer.get_complexity_rating(analysis.max_complexity)}")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to analyze code: {e}")
+        finally:
+            self.analyze_btn.setEnabled(True)
+            self.analyze_btn.setText("📊 Analyze")
 
 
 class TranslationThread(QThread):

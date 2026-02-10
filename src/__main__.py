@@ -102,6 +102,44 @@ Supported Languages:
     )
 
     parser.add_argument(
+        "--explain",
+        action="store_true",
+        help="Explain the code in plain English instead of translating",
+    )
+
+    parser.add_argument(
+        "--explain-lines",
+        action="store_true",
+        help="Add line-by-line comments explaining the code",
+    )
+
+    parser.add_argument(
+        "--analyze",
+        action="store_true",
+        help="Analyze code complexity and suggest optimizations",
+    )
+
+    parser.add_argument(
+        "--generate-tests",
+        action="store_true",
+        help="Generate unit tests for the code",
+    )
+
+    parser.add_argument(
+        "--test-framework",
+        type=str,
+        choices=["pytest", "jest", "junit"],
+        default=None,
+        help="Test framework for generated tests",
+    )
+
+    parser.add_argument(
+        "--notebook",
+        action="store_true",
+        help="Treat input as Jupyter notebook (.ipynb)",
+    )
+
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -169,6 +207,105 @@ def main() -> int:
             return 0
         else:
             print("Could not detect language", file=sys.stderr)
+            return 1
+
+    # Explain mode
+    if args.explain or args.explain_lines:
+        if not args.input_file:
+            print("Error: Input file required for explanation", file=sys.stderr)
+            return 1
+        code = read_input(args.input_file)
+        source_lang = args.source_lang
+        if source_lang:
+            source_lang = source_lang.title()
+        explanation = translator.explain_code(code, source_lang, line_by_line=args.explain_lines)
+        write_output(explanation, args.output)
+        return 0
+
+    # Analyze mode
+    if args.analyze:
+        if not args.input_file:
+            print("Error: Input file required for analysis", file=sys.stderr)
+            return 1
+        code = read_input(args.input_file)
+        
+        from analyzer.complexity import ComplexityAnalyzer
+        analyzer = ComplexityAnalyzer()
+        
+        source_lang = args.source_lang
+        if source_lang:
+            source_lang = source_lang.title()
+        else:
+            source_lang = translator.detect_language(code)
+            if not source_lang:
+                print("Error: Could not detect language. Please specify with --from", file=sys.stderr)
+                return 1
+        
+        analysis = analyzer.analyze(code, source_lang)
+        output = analyzer.format_analysis(analysis)
+        write_output(output, args.output)
+        return 0
+
+    # Generate tests mode
+    if args.generate_tests:
+        if not args.input_file:
+            print("Error: Input file required for test generation", file=sys.stderr)
+            return 1
+        code = read_input(args.input_file)
+        
+        from translator.test_generator import TestGenerator, TestFramework
+        generator = TestGenerator()
+        
+        source_lang = args.source_lang
+        if source_lang:
+            source_lang = source_lang.title()
+        else:
+            source_lang = translator.detect_language(code)
+            if not source_lang:
+                print("Error: Could not detect language. Please specify with --from", file=sys.stderr)
+                return 1
+        
+        framework = None
+        if args.test_framework:
+            framework_map = {
+                "pytest": TestFramework.PYTEST,
+                "jest": TestFramework.JEST,
+                "junit": TestFramework.JUNIT,
+            }
+            framework = framework_map[args.test_framework]
+        
+        tests = generator.generate_tests(code, source_lang, framework)
+        write_output(tests, args.output)
+        return 0
+
+    # Notebook mode
+    if args.notebook:
+        if not args.input_file:
+            print("Error: Input notebook file required", file=sys.stderr)
+            return 1
+        if not args.target_lang:
+            print("Error: --to (target language) is required for notebook translation", file=sys.stderr)
+            return 1
+        
+        from translator.notebook_handler import NotebookHandler
+        handler = NotebookHandler(translator)
+        
+        source_lang = args.source_lang if args.source_lang else "Python"
+        target_lang = args.target_lang.title()
+        
+        try:
+            notebook = handler.parse_notebook_file(args.input_file)
+            translated_nb, stats = handler.translate_notebook(notebook, source_lang, target_lang)
+            
+            if args.output:
+                handler.save_notebook(translated_nb, args.output)
+                print(f"Notebook translated: {stats['translated_cells']}/{stats['code_cells']} cells", file=sys.stderr)
+            else:
+                print(handler.notebook_to_json(translated_nb))
+            
+            return 0
+        except Exception as e:
+            print(f"Error translating notebook: {e}", file=sys.stderr)
             return 1
 
     # Translation mode

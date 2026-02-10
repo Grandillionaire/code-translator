@@ -593,3 +593,269 @@ Instructions:
                 return best_match
 
         return None
+
+    def explain_code(
+        self,
+        code: str,
+        language: Optional[str] = None,
+        line_by_line: bool = False,
+        provider: Optional[TranslationProvider] = None,
+    ) -> str:
+        """
+        Generate a plain English explanation of the code.
+
+        Args:
+            code: Source code to explain
+            language: Programming language (auto-detected if not provided)
+            line_by_line: If True, add comments for each line
+            provider: AI provider to use
+
+        Returns:
+            Plain English explanation or commented code
+        """
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(
+                self.explain_code_async(code, language, line_by_line, provider)
+            )
+        finally:
+            loop.close()
+
+    async def explain_code_async(
+        self,
+        code: str,
+        language: Optional[str] = None,
+        line_by_line: bool = False,
+        provider: Optional[TranslationProvider] = None,
+    ) -> str:
+        """
+        Async version of explain_code.
+        """
+        # Auto-detect language if not provided
+        if not language:
+            language = self.detect_language(code)
+            if not language:
+                language = "Unknown"
+
+        # Select provider
+        if provider is None:
+            provider = self._select_best_provider()
+
+        try:
+            return await self._explain_with_provider(code, language, line_by_line, provider)
+        except Exception as e:
+            self.logger.error(f"Explanation failed with {provider}: {e}")
+
+            # Fallback to offline explanation
+            if provider != TranslationProvider.OFFLINE:
+                return self._explain_offline(code, language, line_by_line)
+            raise
+
+    async def _explain_with_provider(
+        self,
+        code: str,
+        language: str,
+        line_by_line: bool,
+        provider: TranslationProvider,
+    ) -> str:
+        """Explain code using specific provider"""
+        if provider == TranslationProvider.OPENAI:
+            return await self._explain_openai(code, language, line_by_line)
+        elif provider == TranslationProvider.ANTHROPIC:
+            return await self._explain_anthropic(code, language, line_by_line)
+        elif provider == TranslationProvider.GOOGLE:
+            return await self._explain_google(code, language, line_by_line)
+        else:
+            return self._explain_offline(code, language, line_by_line)
+
+    async def _explain_openai(self, code: str, language: str, line_by_line: bool) -> str:
+        """Explain code using OpenAI"""
+        wrapper = self.providers.get(TranslationProvider.OPENAI)
+        if not wrapper:
+            return self._explain_offline(code, language, line_by_line)
+
+        if line_by_line:
+            prompt = f"""Add detailed inline comments to this {language} code explaining what each line does.
+Keep the original code and add comments above or inline with each significant line.
+
+{language} code:
+{code}
+"""
+        else:
+            prompt = f"""Explain this {language} code in plain English. 
+Describe:
+1. What the code does overall
+2. The main components/functions
+3. The flow of execution
+4. Any important patterns or techniques used
+
+{language} code:
+{code}
+"""
+
+        response = await asyncio.to_thread(
+            wrapper.create_chat_completion_sync,
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are an expert code explainer."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.3,
+            max_tokens=2000,
+        )
+
+        return response["content"].strip()
+
+    async def _explain_anthropic(self, code: str, language: str, line_by_line: bool) -> str:
+        """Explain code using Anthropic Claude"""
+        client = self.providers.get(TranslationProvider.ANTHROPIC)
+        if not client:
+            return self._explain_offline(code, language, line_by_line)
+
+        if line_by_line:
+            prompt = f"""Add detailed inline comments to this {language} code.
+For each significant line, add a comment explaining what it does and why.
+Preserve the original code structure.
+
+{language} code:
+{code}
+"""
+        else:
+            prompt = f"""Provide a comprehensive explanation of this {language} code.
+
+Include:
+1. Overall purpose and functionality
+2. Description of each function/class
+3. Data flow and control flow
+4. Key algorithms or patterns used
+5. Any potential issues or improvements
+
+{language} code:
+{code}
+"""
+
+        message = await asyncio.to_thread(
+            client.messages.create,
+            model="claude-3-opus-20240229",
+            max_tokens=2000,
+            temperature=0.3,
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        return message.content[0].text.strip()
+
+    async def _explain_google(self, code: str, language: str, line_by_line: bool) -> str:
+        """Explain code using Google Gemini"""
+        genai_client = self.providers.get(TranslationProvider.GOOGLE)
+        if not genai_client:
+            return self._explain_offline(code, language, line_by_line)
+
+        model = genai_client.GenerativeModel("gemini-pro")
+
+        if line_by_line:
+            prompt = f"""Add inline comments to this {language} code explaining each line.
+Keep all original code and add explanatory comments.
+
+{language} code:
+{code}
+"""
+        else:
+            prompt = f"""Explain this {language} code in detail.
+Describe what it does, how it works, and any important patterns.
+
+{language} code:
+{code}
+"""
+
+        response = await asyncio.to_thread(
+            model.generate_content,
+            prompt,
+            generation_config={
+                "temperature": 0.3,
+                "max_output_tokens": 2000,
+            },
+        )
+
+        return response.text.strip()
+
+    def _explain_offline(self, code: str, language: str, line_by_line: bool) -> str:
+        """Generate basic explanation without AI"""
+        lines = code.split('\n')
+
+        if line_by_line:
+            # Add basic comments based on patterns
+            commented_lines = []
+            for line in lines:
+                stripped = line.strip()
+                comment = self._get_line_comment(stripped, language)
+                if comment:
+                    comment_char = "#" if language == "Python" else "//"
+                    commented_lines.append(f"{comment_char} {comment}")
+                commented_lines.append(line)
+            return '\n'.join(commented_lines)
+        else:
+            # Generate basic summary
+            return self._generate_basic_summary(code, language)
+
+    def _get_line_comment(self, line: str, language: str) -> Optional[str]:
+        """Generate a comment for a line of code"""
+        patterns = [
+            (r'^def\s+(\w+)', 'Define function: {}'),
+            (r'^class\s+(\w+)', 'Define class: {}'),
+            (r'^import\s+(\w+)', 'Import module: {}'),
+            (r'^from\s+(\w+)', 'Import from module: {}'),
+            (r'^if\s+', 'Conditional check'),
+            (r'^for\s+', 'Loop iteration'),
+            (r'^while\s+', 'While loop'),
+            (r'^return\s+', 'Return value'),
+            (r'^try:', 'Begin error handling'),
+            (r'^except', 'Handle exception'),
+            (r'^function\s+(\w+)', 'Define function: {}'),
+            (r'^const\s+(\w+)', 'Declare constant: {}'),
+            (r'^let\s+(\w+)', 'Declare variable: {}'),
+        ]
+
+        for pattern, template in patterns:
+            match = re.match(pattern, line)
+            if match:
+                if '{}' in template and match.groups():
+                    return template.format(match.group(1))
+                return template
+
+        return None
+
+    def _generate_basic_summary(self, code: str, language: str) -> str:
+        """Generate a basic summary of the code"""
+        summary_parts = [f"This is {language} code."]
+
+        # Count functions
+        func_patterns = {
+            "Python": r'\bdef\s+(\w+)',
+            "JavaScript": r'\bfunction\s+(\w+)',
+            "Java": r'(?:public|private|protected)\s+\w+\s+(\w+)\s*\(',
+        }
+
+        pattern = func_patterns.get(language, func_patterns["Python"])
+        functions = re.findall(pattern, code)
+        if functions:
+            summary_parts.append(f"\nFunctions defined: {', '.join(functions[:5])}")
+            if len(functions) > 5:
+                summary_parts.append(f" (and {len(functions) - 5} more)")
+
+        # Count classes
+        classes = re.findall(r'\bclass\s+(\w+)', code)
+        if classes:
+            summary_parts.append(f"\nClasses defined: {', '.join(classes)}")
+
+        # Detect common patterns
+        if re.search(r'\.read\(|\.write\(|open\(', code):
+            summary_parts.append("\nContains file I/O operations.")
+        if re.search(r'requests\.|urllib|fetch\(|http', code, re.IGNORECASE):
+            summary_parts.append("\nContains HTTP/network operations.")
+        if re.search(r'SELECT|INSERT|UPDATE|DELETE|\.execute\(', code, re.IGNORECASE):
+            summary_parts.append("\nContains database operations.")
+
+        summary_parts.append("\n\nNote: For detailed explanations, configure an AI provider.")
+
+        return ''.join(summary_parts)

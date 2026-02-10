@@ -105,6 +105,67 @@ class HealthResponse(BaseModel):
     providers_available: List[str]
 
 
+class ExplainRequest(BaseModel):
+    """Code explanation request"""
+
+    code: str = Field(..., description="Source code to explain")
+    language: Optional[str] = Field(None, description="Programming language")
+    line_by_line: bool = Field(False, description="Add line-by-line comments")
+
+
+class ExplainResponse(BaseModel):
+    """Code explanation response"""
+
+    explanation: str
+    language: str
+
+
+class AnalyzeRequest(BaseModel):
+    """Code analysis request"""
+
+    code: str = Field(..., description="Source code to analyze")
+    language: Optional[str] = Field(None, description="Programming language")
+
+
+class AnalyzeResponse(BaseModel):
+    """Code analysis response"""
+
+    language: str
+    total_lines: int
+    code_lines: int
+    comment_lines: int
+    functions_count: int
+    average_complexity: float
+    max_complexity: int
+    overall_big_o: str
+    suggestions: List[str]
+    functions: List[dict]
+
+
+class GenerateTestsRequest(BaseModel):
+    """Test generation request"""
+
+    code: str = Field(..., description="Source code to generate tests for")
+    language: Optional[str] = Field(None, description="Programming language")
+    framework: Optional[str] = Field(None, description="Test framework (pytest, jest, junit)")
+
+
+class GenerateTestsResponse(BaseModel):
+    """Test generation response"""
+
+    tests: str
+    framework: str
+    language: str
+
+
+class NotebookRequest(BaseModel):
+    """Notebook translation request"""
+
+    notebook_json: str = Field(..., description="Jupyter notebook JSON content")
+    source_lang: str = Field("Python", description="Source programming language")
+    target_lang: str = Field(..., description="Target programming language")
+
+
 # API Routes
 @app.get("/api/health", response_model=HealthResponse, tags=["Health"])
 async def health_check():
@@ -202,6 +263,166 @@ async def translate_code(request: TranslateRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Translation failed: {str(e)}")
+
+
+@app.post("/api/explain", response_model=ExplainResponse, tags=["Explanation"])
+async def explain_code(request: ExplainRequest):
+    """Explain code in plain English"""
+    language = request.language
+    if not language:
+        language = translator.detect_language(request.code)
+        if not language:
+            language = "Unknown"
+
+    try:
+        explanation = translator.explain_code(
+            request.code,
+            language,
+            line_by_line=request.line_by_line
+        )
+        return ExplainResponse(
+            explanation=explanation,
+            language=language
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Explanation failed: {str(e)}")
+
+
+@app.post("/api/analyze", response_model=AnalyzeResponse, tags=["Analysis"])
+async def analyze_code(request: AnalyzeRequest):
+    """Analyze code complexity"""
+    from analyzer.complexity import ComplexityAnalyzer
+    
+    analyzer = ComplexityAnalyzer()
+    
+    language = request.language
+    if not language:
+        language = translator.detect_language(request.code)
+        if not language:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not detect language. Please specify language."
+            )
+
+    try:
+        analysis = analyzer.analyze(request.code, language)
+        
+        return AnalyzeResponse(
+            language=analysis.language,
+            total_lines=analysis.total_lines,
+            code_lines=analysis.code_lines,
+            comment_lines=analysis.comment_lines,
+            functions_count=len(analysis.functions),
+            average_complexity=analysis.average_complexity,
+            max_complexity=analysis.max_complexity,
+            overall_big_o=analysis.overall_big_o.value,
+            suggestions=analysis.suggestions,
+            functions=[
+                {
+                    "name": f.name,
+                    "start_line": f.start_line,
+                    "end_line": f.end_line,
+                    "cyclomatic_complexity": f.cyclomatic_complexity,
+                    "big_o": f.estimated_big_o.value,
+                    "nesting_depth": f.nesting_depth,
+                    "has_recursion": f.has_recursion,
+                    "suggestions": f.suggestions
+                }
+                for f in analysis.functions
+            ]
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+@app.post("/api/generate-tests", response_model=GenerateTestsResponse, tags=["Testing"])
+async def generate_tests(request: GenerateTestsRequest):
+    """Generate unit tests for code"""
+    from translator.test_generator import TestGenerator, TestFramework
+    
+    generator = TestGenerator()
+    
+    language = request.language
+    if not language:
+        language = translator.detect_language(request.code)
+        if not language:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not detect language. Please specify language."
+            )
+
+    framework = None
+    framework_name = "auto"
+    if request.framework:
+        framework_map = {
+            "pytest": TestFramework.PYTEST,
+            "jest": TestFramework.JEST,
+            "junit": TestFramework.JUNIT,
+        }
+        if request.framework.lower() not in framework_map:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown framework: {request.framework}. Available: pytest, jest, junit"
+            )
+        framework = framework_map[request.framework.lower()]
+        framework_name = request.framework.lower()
+
+    try:
+        tests = generator.generate_tests(request.code, language, framework)
+        
+        # Determine framework name if auto
+        if framework_name == "auto":
+            if language == "Python":
+                framework_name = "pytest"
+            elif language in ["JavaScript", "TypeScript"]:
+                framework_name = "jest"
+            elif language in ["Java", "Kotlin"]:
+                framework_name = "junit"
+            else:
+                framework_name = "pytest"
+        
+        return GenerateTestsResponse(
+            tests=tests,
+            framework=framework_name,
+            language=language
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Test generation failed: {str(e)}")
+
+
+@app.post("/api/notebook/translate", tags=["Notebook"])
+async def translate_notebook(request: NotebookRequest):
+    """Translate a Jupyter notebook"""
+    from translator.notebook_handler import NotebookHandler
+    
+    handler = NotebookHandler(translator)
+    
+    if request.target_lang not in TranslatorEngine.SUPPORTED_LANGUAGES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported target language: {request.target_lang}"
+        )
+
+    try:
+        notebook = handler.parse_notebook(request.notebook_json)
+        translated_nb, stats = handler.translate_notebook(
+            notebook,
+            request.source_lang,
+            request.target_lang
+        )
+        
+        return {
+            "notebook": handler.notebook_to_json(translated_nb),
+            "stats": {
+                "total_cells": stats["total_cells"],
+                "code_cells": stats["code_cells"],
+                "translated_cells": stats["translated_cells"],
+                "failed_cells": stats["failed_cells"],
+                "errors": stats["errors"]
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Notebook translation failed: {str(e)}")
 
 
 # Serve static files and frontend
