@@ -409,8 +409,14 @@ def hello(name):
                 const data = await response.json();
                 
                 data.languages.forEach(lang => {
-                    sourceLanguageEl.innerHTML += `<option value="${lang}">${lang}</option>`;
-                    targetLanguageEl.innerHTML += `<option value="${lang}">${lang}</option>`;
+                    const opt1 = document.createElement('option');
+                    opt1.value = lang;
+                    opt1.textContent = lang;
+                    sourceLanguageEl.appendChild(opt1);
+                    const opt2 = document.createElement('option');
+                    opt2.value = lang;
+                    opt2.textContent = lang;
+                    targetLanguageEl.appendChild(opt2);
                 });
 
                 // Set default target

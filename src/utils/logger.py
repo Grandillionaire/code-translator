@@ -3,6 +3,7 @@ Logging configuration for Code Translator
 """
 
 import logging
+import os
 import sys
 from pathlib import Path
 from datetime import datetime
@@ -30,6 +31,7 @@ def setup_logger(name: str = "CodeTranslator") -> logging.Logger:
     log_file = log_dir / f"code_translator_{datetime.now().strftime('%Y%m%d')}.log"
     file_handler = logging.FileHandler(log_file)
     file_handler.setLevel(logging.DEBUG)
+    os.chmod(log_file, 0o600)
 
     # Formatter
     formatter = logging.Formatter(

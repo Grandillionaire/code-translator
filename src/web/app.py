@@ -9,13 +9,18 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+import logging
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
+from starlette.responses import JSONResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
 import os
+
+logger = logging.getLogger(__name__)
 
 from translator.translator_engine import TranslatorEngine, TranslationProvider
 from config.settings import Settings
@@ -33,11 +38,23 @@ app = FastAPI(
 # CORS middleware for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=os.environ.get("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000").split(","),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
+
+API_KEY = os.environ.get("API_KEY")
+
+
+@app.middleware("http")
+async def authenticate(request: Request, call_next):
+    if API_KEY and request.url.path.startswith("/api/"):
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or auth_header != f"Bearer {API_KEY}":
+            return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
+    return await call_next(request)
+
 
 # Initialize translator
 settings = Settings()
@@ -191,6 +208,9 @@ async def get_languages():
 @app.post("/api/detect", response_model=DetectResponse, tags=["Detection"])
 async def detect_language(request: DetectRequest):
     """Auto-detect the programming language of code"""
+    if len(request.code) > 50000:  # 50KB limit
+        raise HTTPException(status_code=413, detail="Code input too large")
+
     detected = translator.detect_language(request.code)
     return DetectResponse(
         detected_language=detected,
@@ -201,6 +221,9 @@ async def detect_language(request: DetectRequest):
 @app.post("/api/translate", response_model=TranslateResponse, tags=["Translation"])
 async def translate_code(request: TranslateRequest):
     """Translate code between programming languages"""
+
+    if len(request.code) > 50000:  # 50KB limit
+        raise HTTPException(status_code=413, detail="Code input too large")
 
     # Validate target language
     if request.target_lang not in TranslatorEngine.SUPPORTED_LANGUAGES:
@@ -262,12 +285,16 @@ async def translate_code(request: TranslateRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Translation failed: {str(e)}")
+        logger.exception("Translation failed")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @app.post("/api/explain", response_model=ExplainResponse, tags=["Explanation"])
 async def explain_code(request: ExplainRequest):
     """Explain code in plain English"""
+    if len(request.code) > 50000:  # 50KB limit
+        raise HTTPException(status_code=413, detail="Code input too large")
+
     language = request.language
     if not language:
         language = translator.detect_language(request.code)
@@ -285,12 +312,16 @@ async def explain_code(request: ExplainRequest):
             language=language
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Explanation failed: {str(e)}")
+        logger.exception("Explanation failed")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @app.post("/api/analyze", response_model=AnalyzeResponse, tags=["Analysis"])
 async def analyze_code(request: AnalyzeRequest):
     """Analyze code complexity"""
+    if len(request.code) > 50000:  # 50KB limit
+        raise HTTPException(status_code=413, detail="Code input too large")
+
     from analyzer.complexity import ComplexityAnalyzer
     
     analyzer = ComplexityAnalyzer()
@@ -332,12 +363,16 @@ async def analyze_code(request: AnalyzeRequest):
             ]
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        logger.exception("Analysis failed")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @app.post("/api/generate-tests", response_model=GenerateTestsResponse, tags=["Testing"])
 async def generate_tests(request: GenerateTestsRequest):
     """Generate unit tests for code"""
+    if len(request.code) > 50000:  # 50KB limit
+        raise HTTPException(status_code=413, detail="Code input too large")
+
     from translator.test_generator import TestGenerator, TestFramework
     
     generator = TestGenerator()
@@ -387,7 +422,8 @@ async def generate_tests(request: GenerateTestsRequest):
             language=language
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Test generation failed: {str(e)}")
+        logger.exception("Test generation failed")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @app.post("/api/notebook/translate", tags=["Notebook"])
@@ -422,7 +458,8 @@ async def translate_notebook(request: NotebookRequest):
             }
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Notebook translation failed: {str(e)}")
+        logger.exception("Notebook translation failed")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 # Serve static files and frontend
@@ -459,5 +496,5 @@ if __name__ == "__main__":
         "src.web.app:app",
         host="0.0.0.0",
         port=8000,
-        reload=True,
+        reload=os.environ.get("DEBUG", "").lower() == "true",
     )

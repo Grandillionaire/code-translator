@@ -4,6 +4,7 @@ Simple launcher for Code Translator
 Handles different Python configurations robustly
 """
 
+import ast
 import subprocess
 import sys
 import os
@@ -33,7 +34,7 @@ def find_python_command():
                     [cmd, '-c', 'import sys; print(sys.version_info[:2])'],
                     capture_output=True, text=True, check=True
                 )
-                version = eval(result.stdout.strip())
+                version = ast.literal_eval(result.stdout.strip())
                 if version >= (3, 8):
                     return cmd
             except:
