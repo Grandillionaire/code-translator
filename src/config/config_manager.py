@@ -4,6 +4,7 @@ Provides atomic operations, schema versioning, corruption detection, and automat
 """
 
 import json
+import os
 import yaml
 import sqlite3
 import tempfile
@@ -348,11 +349,20 @@ class SecureCredentialManager:
                 key = f.read()
         else:
             if password:
+                # Generate and persist a random salt per installation
+                salt_file = Path(self.key_path.parent) / ".salt"
+                if salt_file.exists():
+                    salt = salt_file.read_bytes()
+                else:
+                    salt = os.urandom(16)
+                    salt_file.write_bytes(salt)
+                    salt_file.chmod(0o600)
+
                 # Derive key from password
                 kdf = PBKDF2HMAC(
                     algorithm=hashes.SHA256(),
                     length=32,
-                    salt=b"code-translator-salt",  # In production, use random salt
+                    salt=salt,
                     iterations=100000,
                 )
                 key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
